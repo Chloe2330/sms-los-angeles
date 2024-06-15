@@ -9,7 +9,7 @@ import (
 var err error
 
 func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
-	duration := 12 * time.Second
+	duration := 30 * time.Second
 	logger := workflow.GetLogger(ctx)
 
 	logger.Info("Subscription created", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
