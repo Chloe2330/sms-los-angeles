@@ -31,21 +31,24 @@
 ## Send requests to the server
 
 `cd sms-los-angeles`
+### Endpoints 
 
 1. `/subscribe` to daily messages, start workflow execution
-
-    `curl -X POST \  
+```bash
+curl -X POST \
   http://localhost:4000/subscribe \
   -H 'Content-Type: application/json' \
   -d '{
     "phonenumber": "+1XXXXXXXXX"
-  }'`
+  }'
+```
 
 2. `/unsubscribe` from daily messages, cancel workflow execution
-
-    `curl -X DELETE \                                          
+```bash
+curl -X DELETE \
   http://localhost:4000/unsubscribe \
   -H 'Content-Type: application/json' \
   -d '{
     "phonenumber": "+1XXXXXXXXX"
-  }'`
+  }'
+```
