@@ -9,6 +9,7 @@ import (
 	"os"
 	"sms"
 
+	"github.com/joho/godotenv"
 	"go.temporal.io/sdk/client"
 )
 
@@ -80,7 +81,7 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Define the SMSDetails struct
 	subscription := sms.SMSDetails{
-		TwilioPhoneNumber:    os.Getenv("TWILIO_PHONE_NUMBER"),
+		TwilioPhoneNumber:    GetEnvVar("TWILIO_PHONE_NUMBER"),
 		RecipientPhoneNumber: requestData.PhoneNumber,
 		Message:              "Welcome to the Subscription Workflow!",
 		IsSubscribed:         true,
@@ -111,4 +112,14 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		log.Print("Could not encode response JSON", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
+}
+
+// use godot package to load/read the .env file and return Twilio secrets
+func GetEnvVar(key string) string {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
+	return os.Getenv(key)
 }
