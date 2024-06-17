@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"sms"
 
 	"github.com/joho/godotenv"
@@ -70,6 +71,15 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 	// check if the phone number is blank
 	if requestData.PhoneNumber == "" {
 		http.Error(w, "Phone number is blank", http.StatusBadRequest)
+		return
+	}
+
+	pattern := `^\+1\d{9}$`
+	re := regexp.MustCompile(pattern)
+
+	// check if the phone number is valid
+	if !re.MatchString(requestData.PhoneNumber) {
+		http.Error(w, "Invalid phone number", http.StatusBadRequest)
 		return
 	}
 
@@ -142,6 +152,15 @@ func unsubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	// check if the phone number is blank
 	if requestData.PhoneNumber == "" {
 		http.Error(w, "Phone number is blank", http.StatusBadRequest)
+		return
+	}
+
+	pattern := `^\+1\d{9}$`
+	re := regexp.MustCompile(pattern)
+
+	// check if the phone number is valid
+	if !re.MatchString(requestData.PhoneNumber) {
+		http.Error(w, "Invalid phone number", http.StatusBadRequest)
 		return
 	}
 	workflowID := requestData.PhoneNumber
