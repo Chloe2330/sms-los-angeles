@@ -8,7 +8,7 @@
 
 3. Install the Temporal Go SDK: `https://go.dev/doc/install`
 
-4. Download the [Temporal CLI](https://go.dev/doc/install)
+4. Download the [Temporal CLI](https://learn.temporal.io/getting_started/go/dev_environment/#set-up-a-local-temporal-service-for-development-with-temporal-cli) 
 
 5. Start a local Temporal service in a new terminal window: `temporal server start-dev`
 
