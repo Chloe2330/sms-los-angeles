@@ -1,6 +1,7 @@
 package sms
 
 import (
+	"errors"
 	"time"
 
 	"go.temporal.io/sdk/workflow"
@@ -18,6 +19,34 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 		StartToCloseTimeout: 30 * time.Second,
 		WaitForCancellation: true,
 	})
+
+	defer func() {
+
+		// create disconnected new context to send cancellation message as async operation
+		newCtx, cancel := workflow.NewDisconnectedContext(ctx)
+
+		// clean up resources associated with new context, called when func() exits
+		defer cancel()
+
+		// current context (ctx) is canceled
+		if errors.Is(ctx.Err(), workflow.ErrCanceled) {
+			data := SMSDetails{
+				TwilioPhoneNumber:    smsDetails.TwilioPhoneNumber,
+				RecipientPhoneNumber: smsDetails.RecipientPhoneNumber,
+				Message:              "Your subscription has been canceled. Sorry to see you go!",
+				IsSubscribed:         false,
+				SubscriptionCount:    smsDetails.SubscriptionCount,
+			}
+			// send cancellation message
+			err := workflow.ExecuteActivity(newCtx, SendMessage, data).Get(newCtx, nil)
+			if err != nil {
+				logger.Error("Failed to send cancellation message", "Error", err)
+			} else {
+				// Cancellation received.
+				logger.Info("Sent cancellation message", "PhoneNumber", smsDetails.RecipientPhoneNumber)
+			}
+		}
+	}()
 
 	logger.Info("Sending welcome message...", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
 	smsDetails.SubscriptionCount++
