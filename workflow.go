@@ -7,13 +7,20 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
-var err error
-
 func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 	duration := 30 * time.Second
 	logger := workflow.GetLogger(ctx)
 
 	logger.Info("Subscription created", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
+
+	// Query handler
+	err := workflow.SetQueryHandler(ctx, "GetDetails", func() (SMSDetails, error) {
+		return smsDetails, nil
+	})
+
+	if err != nil {
+		return err
+	}
 
 	ctx = workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
 		StartToCloseTimeout: 30 * time.Second,
@@ -30,6 +37,7 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 
 		// current context (ctx) is canceled
 		if errors.Is(ctx.Err(), workflow.ErrCanceled) {
+			smsDetails.SubscriptionCount--
 			data := SMSDetails{
 				TwilioPhoneNumber:    smsDetails.TwilioPhoneNumber,
 				RecipientPhoneNumber: smsDetails.RecipientPhoneNumber,

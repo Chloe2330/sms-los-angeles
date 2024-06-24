@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"sms"
@@ -41,10 +42,11 @@ func main() {
 
 	http.HandleFunc("/subscribe", subscribeHandler)
 	http.HandleFunc("/unsubscribe", unsubscribeHandler)
+	http.HandleFunc("/details", showDetailsHandler)
 	_ = http.ListenAndServe(":4000", nil)
 }
 
-// create subscribe handler, which collects the subscriber's phone number
+// create subscribe handler, which collects the subscriber's phone number and is accessed at localhost:4000/subscribe
 func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// only respond to POST
@@ -74,7 +76,7 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pattern := `^\+1\d{9}$`
+	pattern := `^\+1\d{10}$`
 	re := regexp.MustCompile(pattern)
 
 	// check if the phone number is valid
@@ -155,7 +157,7 @@ func unsubscribeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pattern := `^\+1\d{9}$`
+	pattern := `^\+1\d{10}$`
 	re := regexp.MustCompile(pattern)
 
 	// check if the phone number is valid
@@ -185,6 +187,61 @@ func unsubscribeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// send response
 	if err := json.NewEncoder(w).Encode(responseData); err != nil {
+		log.Print("Could not encode response JSON", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+// create query handler, accessed at localhost:4000/details?phonenumber=%2B1XXXXXXXXXX
+func showDetailsHandler(w http.ResponseWriter, r *http.Request) {
+	// only respond to GET
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the query string
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		http.Error(w, "Couldn't query values. Please try again.", http.StatusInternalServerError)
+		log.Println("Failed to query Workflow.")
+		return
+	}
+
+	// Extract the email parameter
+	phoneNumber := queryValues.Get("phonenumber")
+
+	// check if the phone number is blank
+	if phoneNumber == "" {
+		http.Error(w, "Phone number is blank", http.StatusBadRequest)
+		return
+	}
+
+	workflowID := phoneNumber
+	queryType := "GetDetails"
+
+	// print phone number, billing period, charge, etc.
+	resp, err := temporalClient.QueryWorkflow(context.Background(), workflowID, "", queryType)
+	if err != nil {
+		http.Error(w, "Couldn't query values. Phone number does not exist in workflow.", http.StatusInternalServerError)
+		log.Println("Failed to query Workflow.")
+		return
+	}
+
+	var result sms.SMSDetails
+
+	if err := resp.Get(&result); err != nil {
+		http.Error(w, "Couldn't query values. Please try again.", http.StatusInternalServerError)
+		log.Println("Failed to query Workflow.")
+		return
+	}
+
+	// send headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated) // 201 Created status code
+
+	// send response
+	if err := json.NewEncoder(w).Encode(result); err != nil {
 		log.Print("Could not encode response JSON", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
