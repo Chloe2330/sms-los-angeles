@@ -16,7 +16,7 @@
 
 1. Sign up for [Twilio SMS](https://www.twilio.com/en-us/messaging/channels/sms)
 
-2. Create `.env` file in `server` directory and set Twilio phone number: `TWILIO_PHONE_NUMBER="+1XXXXXXXXX"`
+2. Create `.env` file in `server` directory and set Twilio phone number: `TWILIO_PHONE_NUMBER="+1XXXXXXXXXX"`
 
 3. Create `.env` file in `worker` directory and set Twilio auth tokens: `TWILIO_ACCOUNT_SID="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"` `TWILIO_AUTH_TOKEN="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"`
 
@@ -39,16 +39,16 @@ curl -X POST \
   http://localhost:4000/subscribe \
   -H 'Content-Type: application/json' \
   -d '{
-    "phonenumber": "+1XXXXXXXXX"
+    "phonenumber": "+1XXXXXXXXXX"
   }'
 ```
 
 2. `/unsubscribe` from daily messages, cancel workflow execution
 ```bash
-curl -X DELETE \
-  http://localhost:4000/unsubscribe \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "phonenumber": "+1XXXXXXXXX"
-  }'
+ curl -X DELETE 'http://localhost:4000/unsubscribe?phonenumber=1XXXXXXXXXX'
+```
+
+3. `/details` to query information about an existing workflow
+```bash
+ curl 'http://localhost:4000/details?phonenumber=1XXXXXXXXXX'
 ```
