@@ -8,5 +8,5 @@ type SMSDetails struct {
 	RecipientPhoneNumber string `json:"recipientPhoneNumber"`
 	Message              string `json:"message"`
 	IsSubscribed         bool   `json:"isSubscribed"`
-	SubscriptionCount    int    `json:"subscriptionCount"`
+	MessageCount         int    `json:"messageCount"`
 }

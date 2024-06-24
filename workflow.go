@@ -37,13 +37,12 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 
 		// current context (ctx) is canceled
 		if errors.Is(ctx.Err(), workflow.ErrCanceled) {
-			smsDetails.SubscriptionCount--
 			data := SMSDetails{
 				TwilioPhoneNumber:    smsDetails.TwilioPhoneNumber,
 				RecipientPhoneNumber: smsDetails.RecipientPhoneNumber,
 				Message:              "Your subscription has been canceled. Sorry to see you go!",
 				IsSubscribed:         false,
-				SubscriptionCount:    smsDetails.SubscriptionCount,
+				MessageCount:         smsDetails.MessageCount,
 			}
 			// send cancellation message
 			err := workflow.ExecuteActivity(newCtx, SendMessage, data).Get(newCtx, nil)
@@ -57,13 +56,13 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 	}()
 
 	logger.Info("Sending welcome message...", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
-	smsDetails.SubscriptionCount++
+	smsDetails.MessageCount++
 	data := SMSDetails{
 		TwilioPhoneNumber:    smsDetails.TwilioPhoneNumber,
 		RecipientPhoneNumber: smsDetails.RecipientPhoneNumber,
 		Message:              "Welcome! You have signed up!",
 		IsSubscribed:         true,
-		SubscriptionCount:    smsDetails.SubscriptionCount,
+		MessageCount:         smsDetails.MessageCount,
 	}
 
 	// send welcome message
@@ -74,7 +73,7 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 
 	// start subscription period
 	for smsDetails.IsSubscribed {
-		smsDetails.SubscriptionCount++
+		smsDetails.MessageCount++
 
 		logger.Info("Sending subscription message...", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
 
@@ -83,7 +82,7 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 			RecipientPhoneNumber: smsDetails.RecipientPhoneNumber,
 			Message:              "This is the recurring message for subscribers",
 			IsSubscribed:         true,
-			SubscriptionCount:    smsDetails.SubscriptionCount,
+			MessageCount:         smsDetails.MessageCount,
 		}
 
 		// send subscription messages

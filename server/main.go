@@ -81,13 +81,13 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// check if the phone number is valid
 	if !re.MatchString(requestData.PhoneNumber) {
-		http.Error(w, "Invalid phone number", http.StatusBadRequest)
+		http.Error(w, "Invalid: Please enter a phone number with the format +1XXXXXXXXXX", http.StatusBadRequest)
 		return
 	}
 
 	// use the phone number as the id in the workflow.
 	workflowOptions := client.StartWorkflowOptions{
-		ID:                                       requestData.PhoneNumber,
+		ID:                                       requestData.PhoneNumber[1:],
 		TaskQueue:                                sms.TaskQueueName,
 		WorkflowExecutionErrorWhenAlreadyStarted: true,
 	}
@@ -98,7 +98,7 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		RecipientPhoneNumber: requestData.PhoneNumber,
 		Message:              "Welcome to the Subscription Workflow!",
 		IsSubscribed:         true,
-		SubscriptionCount:    0,
+		MessageCount:         0,
 	}
 
 	// Execute the Temporal Workflow to start the subscription.
@@ -127,7 +127,7 @@ func subscribeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// create unsubscribe handler, accessed at localhost:4000/unsubscribe
+// create unsubscribe handler, accessed at localhost:4000/unsubscribe?phonenumber=1XXXXXXXXXX
 func unsubscribeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// only respond to DELETE
@@ -136,41 +136,29 @@ func unsubscribeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ensure JSON request
-	if r.Header.Get("Content-Type") != "application/json" {
-		http.Error(w, "Invalid Content-Type, expecting application/json", http.StatusUnsupportedMediaType)
-		return
-	}
-
-	var requestData RequestData
-
-	// decode request into variable
-	err := json.NewDecoder(r.Body).Decode(&requestData)
+	// Parse the query string
+	queryValues, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		http.Error(w, "Error processing request body", http.StatusBadRequest)
+		http.Error(w, "Couldn't query values. Please try again.", http.StatusInternalServerError)
+		log.Println("Failed to query Workflow.")
 		return
 	}
+
+	// Extract the email parameter
+	phoneNumber := queryValues.Get("phonenumber")
 
 	// check if the phone number is blank
-	if requestData.PhoneNumber == "" {
+	if phoneNumber == "" {
 		http.Error(w, "Phone number is blank", http.StatusBadRequest)
 		return
 	}
 
-	pattern := `^\+1\d{10}$`
-	re := regexp.MustCompile(pattern)
-
-	// check if the phone number is valid
-	if !re.MatchString(requestData.PhoneNumber) {
-		http.Error(w, "Invalid phone number", http.StatusBadRequest)
-		return
-	}
-	workflowID := requestData.PhoneNumber
+	workflowID := phoneNumber
 
 	// cancel and return a CancelledError to the Workflow Execution
 	err = temporalClient.CancelWorkflow(context.Background(), workflowID, "")
 	if err != nil {
-		http.Error(w, "Couldn't unsubscribe. Please try again.", http.StatusInternalServerError)
+		http.Error(w, "Couldn't unsubscribe. Phone number does not exist in subscription workflow.", http.StatusInternalServerError)
 		log.Print(err)
 		return
 	}
@@ -192,8 +180,9 @@ func unsubscribeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// create query handler, accessed at localhost:4000/details?phonenumber=%2B1XXXXXXXXXX
+// create query handler, accessed at localhost:4000/details?phonenumber=1XXXXXXXXXX
 func showDetailsHandler(w http.ResponseWriter, r *http.Request) {
+
 	// only respond to GET
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -223,7 +212,7 @@ func showDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	// print phone number, billing period, charge, etc.
 	resp, err := temporalClient.QueryWorkflow(context.Background(), workflowID, "", queryType)
 	if err != nil {
-		http.Error(w, "Couldn't query values. Phone number does not exist in workflow.", http.StatusInternalServerError)
+		http.Error(w, "Couldn't query values. Phone number does not exist in subscription workflow.", http.StatusInternalServerError)
 		log.Println("Failed to query Workflow.")
 		return
 	}
