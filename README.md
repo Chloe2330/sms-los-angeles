@@ -6,7 +6,7 @@
 
 2. Initialize a Go project in a new directory: `go mod init`
 
-3. Install the Temporal Go SDK: `https://go.dev/doc/install`
+3. Install the Temporal Go SDK: `https://github.com/temporalio/sdk-go`
 
 4. Download the [Temporal CLI](https://learn.temporal.io/getting_started/go/dev_environment/#set-up-a-local-temporal-service-for-development-with-temporal-cli) 
 
