@@ -8,7 +8,7 @@ import (
 )
 
 func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
-	duration := 30 * time.Second
+	duration := 20 * time.Minute
 	logger := workflow.GetLogger(ctx)
 
 	logger.Info("Subscription created", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
@@ -76,11 +76,18 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 		smsDetails.MessageCount++
 
 		logger.Info("Sending subscription message...", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
+		future := workflow.ExecuteActivity(ctx, GetMetroInfo)
+		var message string
+
+		err = future.Get(ctx, &message)
+		if err != nil {
+			return err
+		}
 
 		data := SMSDetails{
 			TwilioPhoneNumber:    smsDetails.TwilioPhoneNumber,
 			RecipientPhoneNumber: smsDetails.RecipientPhoneNumber,
-			Message:              "This is the recurring message for subscribers",
+			Message:              message,
 			IsSubscribed:         true,
 			MessageCount:         smsDetails.MessageCount,
 		}
