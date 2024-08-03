@@ -2,6 +2,12 @@ package metro
 
 // https://github.com/mholt/json-to-go
 
+type GeolocationInfo struct {
+	Status      string  `json:"status"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
+}
+
 type MetroPredictions struct {
 	Success bool   `json:"success"`
 	Route   string `json:"route"`

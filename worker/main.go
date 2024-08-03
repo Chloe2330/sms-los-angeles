@@ -26,6 +26,7 @@ func main() {
 	w.RegisterWorkflow(sms.SubscriptionWorkflow)
 	w.RegisterActivity(sms.SendMessage)
 	w.RegisterActivity(sms.GetMetroInfo)
+	w.RegisterActivity(sms.GetCoordinates)
 
 	log.Println("Worker is starting.")
 

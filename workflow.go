@@ -76,7 +76,16 @@ func SubscriptionWorkflow(ctx workflow.Context, smsDetails SMSDetails) error {
 		smsDetails.MessageCount++
 
 		logger.Info("Sending subscription message...", "RecipientPhoneNumber", smsDetails.RecipientPhoneNumber)
-		future := workflow.ExecuteActivity(ctx, GetMetroInfo)
+
+		future := workflow.ExecuteActivity(ctx, GetCoordinates)
+		var coordinates []string 
+
+		err = future.Get(ctx, &coordinates)
+		if err != nil {
+			return err
+		}
+
+		future = workflow.ExecuteActivity(ctx, GetMetroInfo, coordinates)
 		var message string
 
 		err = future.Get(ctx, &message)

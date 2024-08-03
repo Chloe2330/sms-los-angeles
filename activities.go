@@ -44,13 +44,9 @@ func SendMessage(ctx context.Context, smsInfo SMSDetails) error {
 	return err
 }
 
-func GetMetroInfo(ctx context.Context) (string, error) {
+func GetCoordinates(ctx context.Context) ([]string, error) {
 
-	swiftlyKey := GetEnvVar("SWIFTLY_API_KEY")
-	latitude := GetEnvVar("LATITUDE")
-	longitude := GetEnvVar("LONGITUDE")
-
-	url := fmt.Sprintf("https://api.goswift.ly/real-time/lametro-rail/predictions-near-location?lat=%s&lon=%s", latitude, longitude)
+	url := "http://ip-api.com/json/?fields=status,message,lat,lon"
 
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", url, nil)
@@ -59,7 +55,56 @@ func GetMetroInfo(ctx context.Context) (string, error) {
 	}
 
 	// Set the headers
-	req.Header.Set("Accept", "application/json, application/xml")
+	req.Header.Set("Accept", "application/json")
+
+	// Make the GET request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Failed to make GET request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// Check the HTTP status code
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Received non-200 response code: %d", resp.StatusCode)
+	}
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to read response body: %v", err)
+	}
+
+	var geolocationInfo metro.GeolocationInfo
+	if err := json.Unmarshal(body, &geolocationInfo); err != nil {
+		fmt.Println("Can not unmarshal JSON")
+	}
+
+	// Get the coordinates of the device based on IP address 
+	var coordinates []string
+	lat := fmt.Sprintf("%f", geolocationInfo.Lat) 
+	lon := fmt.Sprintf("%f", geolocationInfo.Lon)
+	coordinates = append(coordinates, lat)
+	coordinates = append(coordinates, lon)
+
+	return coordinates, err
+}
+
+func GetMetroInfo(ctx context.Context, coordinates []string) (string, error) {
+
+	swiftlyKey := GetEnvVar("SWIFTLY_API_KEY")
+
+	url := fmt.Sprintf("https://api.goswift.ly/real-time/lametro-rail/predictions-near-location?lat=%s&lon=%s", coordinates[0], coordinates[1])
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalf("Failed to create request: %v", err)
+	}
+
+	// Set the headers
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", swiftlyKey)
 
 	// Make the GET request
@@ -86,6 +131,13 @@ func GetMetroInfo(ctx context.Context) (string, error) {
 		fmt.Println("Can not unmarshal JSON")
 	}
 
+	var text string 
+
+	if (len(metroPredictions.Data.PredictionsData) == 0) {
+		text = fmt.Sprintf("\nNo real-time predictions for %s near your current location: %s, %s.", metroPredictions.Data.AgencyKey, coordinates[0], coordinates[1])
+		return text, err
+	}
+
 	var dataSlice []metro.MetroPredictionsFormatted
 
 	// extract useful information from json response
@@ -110,9 +162,9 @@ func GetMetroInfo(ctx context.Context) (string, error) {
 	// concatenate strings with string builder for efficiency
 	var builder strings.Builder
 	for _, data := range dataSlice {
-		fmt.Fprintf(&builder, "\nRoute: %s\nClosest Stop: %s\nDest: %s\nMinutes Until Arrival: %s\n\n", data.RouteName, data.StopName, data.DestStopName, data.MinsUntilArrival)
+		fmt.Fprintf(&builder, "\nCoordinates: %s,%s\nRoute: %s\nClosest Stop: %s\nDest: %s\nMinutes Until Arrival: %s\n\n", coordinates[0], coordinates[1], data.RouteName, data.StopName, data.DestStopName, data.MinsUntilArrival)
 	}
-	text := builder.String()
+	text = builder.String()
 
 	return text, err
 }
