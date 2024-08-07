@@ -6,19 +6,23 @@
 
 2. Initialize a Go project in a new directory: `go mod init`
 
-3. Install the Temporal Go SDK: `https://github.com/temporalio/sdk-go`
+3. Install the [Temporal Go SDK](https://github.com/temporalio/sdk-go)
 
 4. Download the [Temporal CLI](https://learn.temporal.io/getting_started/go/dev_environment/#set-up-a-local-temporal-service-for-development-with-temporal-cli) 
 
 5. Start a local Temporal service in a new terminal window: `temporal server start-dev`
 
-## Set up Twilio account and secrets 
+## Set up Twilio account, access to Metro API, and secrets 
 
 1. Sign up for [Twilio SMS](https://www.twilio.com/en-us/messaging/channels/sms)
 
 2. Create `.env` file in `server` directory and set Twilio phone number: `TWILIO_PHONE_NUMBER="+1XXXXXXXXXX"`
 
 3. Create `.env` file in `worker` directory and set Twilio auth tokens: `TWILIO_ACCOUNT_SID="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"` `TWILIO_AUTH_TOKEN="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"`
+
+4. Sign up for access to Metro real-time API through [Swiftly](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform), using the agency key `la-metro-rail`.
+
+5. In the `.env` file in `worker` directory, set the API key: `SWIFTLY_API_KEY="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"`
 
 ## Run the workflow 
 
