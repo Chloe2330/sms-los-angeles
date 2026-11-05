@@ -1,5 +1,7 @@
 # SMS Subscription Workflow (Temporal) 
 
+An SMS subscription service that sends real-time LA Metro rail predictions to your phone. Users can subscribe with their phone number to receive periodic updates about nearby train arrivals based on their location. The app uses Temporal for durable workflow orchestration, Twilio for SMS delivery, and the Swiftly API for Metro real-time data.
+
 ## Set up local development environment for Temporal and Go 
 
 1. Install [Go](https://go.dev/doc/install)
