@@ -1,4 +1,4 @@
-# SMS Subscription Workflow (Temporal) 
+# LA Metro SMS Subscription Service
 
 An SMS subscription service that sends real-time LA Metro rail predictions to your phone. Users can subscribe with their phone number to receive periodic updates about nearby train arrivals based on their location. The app uses Temporal for durable workflow orchestration, Twilio for SMS delivery, and the Swiftly API for Metro real-time data.
 
